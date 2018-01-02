@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
@@ -42,7 +41,7 @@ public class AnonymousChatImpl implements AnonymousChat{
    
    
   public Object reply(PeerAddress sender, Object request) throws Exception {
-   Package pk=(Package)request;
+   Pacchetto pk=(Pacchetto)request;
    if(equalPeerAddress(pk.destination,peer.peerAddress()))
 	   System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+"messaggio:"+pk.message);
    else {
@@ -111,7 +110,7 @@ public class AnonymousChatImpl implements AnonymousChat{
  public boolean sendMessage(String _room_name, String _text_message) {
   // TODO Auto-generated method stub
   try {
-   Package pk = new Package();
+   Pacchetto pk = new Pacchetto();
    pk.message=_text_message;
    List<PeerAddress> currentPeerRoomCleared=new ArrayList<PeerAddress>();
    Random r=new Random();
