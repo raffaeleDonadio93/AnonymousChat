@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 
 import net.tomp2p.dht.FutureGet;
 import net.tomp2p.dht.PeerBuilderDHT;
@@ -36,9 +38,19 @@ public class AnonymousChatImpl implements AnonymousChat{
 		}
 		peer.objectDataReply(new ObjectDataReply() {
 		
+			
+			
 		public Object reply(PeerAddress sender, Object request) throws Exception {
-			System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+"messaggio:"+request.toString());
-			return request;
+			
+			/*Package pk=(Package)request;
+			if(equalPeerAddress(pk.destination,peer.peerAddress()))
+				System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+"messaggio:"+pk.message);
+			else {
+				FutureDirect futureDirect = _dht.peer().sendDirect(pk.destination).object(pk).start();
+				System.out.println("sto inoltrando per l'ultima volta ");
+				futureDirect.awaitUninterruptibly();
+			}*/
+			return _listener.parseMessage(request);
 		}
 	});
 		
@@ -96,26 +108,76 @@ public class AnonymousChatImpl implements AnonymousChat{
 		}
 		return false;
 	}
+	class Package{
+		public String message;
+		public PeerAddress destination;
+		
+	}
 	
 	public boolean sendMessage(String _room_name, String _text_message) {
 		// TODO Auto-generated method stub
 		try {
+			Package pk=new Package();
+			pk.message=_text_message;
+			List<PeerAddress> currentPeerRoomCleared=new ArrayList<PeerAddress>();
+			Random r=new Random();
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
 				Room room;
 				room = (Room) futureGet.dataMap().values().iterator().next().object();
-				for(PeerAddress p: room.getUsers())
+				
+				
+				HashSet<PeerAddress> temp= room.getUsers();
+				temp.remove(peer.peerAddress());
+				for(PeerAddress p: temp)
 				{
-					FutureDirect futureDirect = _dht.peer().sendDirect(p).object(_text_message).start();
-					System.out.println("sto mandando un messaggio a tutti gli altri");
-					futureDirect.awaitUninterruptibly();
+					
+					int inoltro=r.nextInt(2);
+					if(inoltro==1) {
+						FutureDirect futureDirect = _dht.peer().sendDirect(p).object(pk).start();
+						System.out.println("sto mandando il messaggio direttamente perchè è uscito falso(croce)");
+						futureDirect.awaitUninterruptibly();
+					}
+					else
+					if (inoltro==0){
+						this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(), peer.peerAddress(),p );
+						int indexInoltro=r.nextInt(currentPeerRoomCleared.size());
+						PeerAddress pd=currentPeerRoomCleared.get(indexInoltro);
+						FutureDirect futureDirect = _dht.peer().sendDirect(pd).object(pk).start();
+						System.out.println("sto inoltrando il messaggio direttamente perchè è uscito true(testa)");
+						futureDirect.awaitUninterruptibly();
+					
+
+					}
+					
+					
 				}
 				return true;
 			}
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
+		return false;
+	}
+	
+	private void getCurrentPeer(List<PeerAddress> list,HashSet<PeerAddress> alluserRoom, PeerAddress s,PeerAddress t) {
+		
+		for(PeerAddress p: alluserRoom)
+			list.add(p);
+		
+		list.remove(s);
+		list.remove(t);
+	}
+
+
+	private boolean equalPeerAddress(PeerAddress p1,PeerAddress p2) {
+		/*non FUNZIONA BISOGNA CONFRONTARE IL PEER ID*/
+		if(p1.isFirewalledTCP()&& p2.isFirewalledTCP())
+			return ((p1.tcpPort() == p2.tcpPort()) && p1.equals(p2));
+		else
+			if(p1.isFirewalledUDP()&& p2.isFirewalledUDP())
+				return ((p1.udpPort() == p2.udpPort()) && p1.equals(p2));
 		return false;
 	}
 }
