@@ -42,8 +42,9 @@ public class TestPublishSubscribeImpl {
 			peer3.joinRoom("calcio");
 			System.out.println("join p3");
 			
-			peer0.sendMessage("calcio", "ciao ragazzzi come va?");
 			System.out.println("send dal nodo 0");
+			peer0.sendMessage("calcio", "ciao ragazzzi come va?");
+			
 		
 			
 			
