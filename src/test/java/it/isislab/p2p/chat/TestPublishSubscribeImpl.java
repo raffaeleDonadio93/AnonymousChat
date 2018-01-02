@@ -23,18 +23,11 @@ public class TestPublishSubscribeImpl {
 			
 			AnonymousChat peer1 = new AnonymousChatImpl(1, "127.0.0.1", new MessageListenerImpl(1));
 			
-			AnonymousChat peer2 = new AnonymousChatImpl(2, "127.0.0.1", new MessageListenerImpl(2));
 			
-			AnonymousChat peer3 = new AnonymousChatImpl(3, "127.0.0.1", new MessageListenerImpl(3));
-			
-			peer1.createRoom("calcio");
-			
+			peer0.createRoom("calcio");
+			peer0.joinRoom("calcio");
 			peer1.joinRoom("calcio");
 			System.out.println("creata");
-			peer2.joinRoom("calcio");
-			System.out.println("join");
-			peer3.joinRoom("calcio");
-			System.out.println("join");
 			peer1.sendMessage("calcio", "ciao ragazzzi come va?");
 			System.out.println("send");
 		
