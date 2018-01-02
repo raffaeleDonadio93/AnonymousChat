@@ -2,6 +2,7 @@ package it.isislab.p2p.chat;
 
 import java.io.IOException;
 
+
 public class TestPublishSubscribeImpl {
 
 	public static void main(String[] args) {
@@ -13,6 +14,8 @@ public class TestPublishSubscribeImpl {
 				this.peerid=peerid;
 			}
 			public Object parseMessage(Object obj) {
+				
+				
 				System.out.println(peerid+"] (Direct Message Received) "+obj);
 				return "success";
 			}
@@ -43,7 +46,7 @@ public class TestPublishSubscribeImpl {
 			System.out.println("join p3");
 			
 			peer0.sendMessage("calcio", "ciao ragazzzi come va?");
-			System.out.println("send dal nodo 0");
+			System.out.println("ciao ragazzi come va?");
 		
 			
 			
