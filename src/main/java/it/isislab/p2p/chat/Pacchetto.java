@@ -6,11 +6,38 @@ import net.tomp2p.peers.PeerAddress;
 
 public class Pacchetto implements Serializable{
 
-	public String message;
-	public PeerAddress destination;
-	@Override
+	private static final long serialVersionUID = -6785859773397922306L;
+	private String message;
+	private PeerAddress destination;
+	
+	public Pacchetto() {
+		message = null;
+		destination = null; 
+	}
+	
+	public Pacchetto(String message, PeerAddress destination) {
+		this.message = message;
+		this.destination = destination;
+	}
+	
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public PeerAddress getDestination() {
+		return destination;
+	}
+
+	public void setDestination(PeerAddress destination) {
+		this.destination = destination;
+	}
+
 	public String toString() {
-		return "Pacchetto [message=" + message + ", destination=" + destination + "]";
+		return getClass().getName() + "[message=" + message + ", destination=" + destination + "]";
 	}
 	
 	
