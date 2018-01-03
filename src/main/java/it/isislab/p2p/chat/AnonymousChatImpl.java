@@ -24,7 +24,7 @@ public class AnonymousChatImpl implements AnonymousChat{
 	final private Peer peer;
 	final private PeerDHT _dht;
 	final private int DEFAULT_MASTER_PORT=4000;
-	final private ArrayList<String> s_topics=new ArrayList<String>();
+	final private ArrayList<String> j_rooms=new ArrayList<String>();
 
 	public AnonymousChatImpl( int _id, String _master_peer, final MessageListener _listener) throws IOException {
 		peer= new PeerBuilder(Number160.createHash(_id)).ports(DEFAULT_MASTER_PORT+_id).start();
@@ -37,8 +37,8 @@ public class AnonymousChatImpl implements AnonymousChat{
 	    peer.objectDataReply(new ObjectDataReply() {
 	    		public Object reply(PeerAddress sender, Object request) throws Exception {
 	    		Pacchetto pk=(Pacchetto)request;
-	    		if(equalPeerAddress(pk.getDestination(),peer.peerAddress())) {
-	    			System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+"messaggio:"+pk.getMessage());
+	    		if(pk.getDestination().peerId().equals(peer.peerAddress().peerId())) {
+	    			System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+" --- messaggio:"+pk.getMessage());
 	    		}
 	    		else {
 			    FutureDirect futureDirect = _dht.peer().sendDirect(pk.getDestination()).object(pk).start();
@@ -51,11 +51,11 @@ public class AnonymousChatImpl implements AnonymousChat{
 
 	public boolean createRoom(String _room_name) {
 		try {
-			Room r=new Room(_room_name);
+			Room room=new Room(_room_name);
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess() && futureGet.isEmpty()) {
-				_dht.put(Number160.createHash(_room_name)).data(new Data(r)).start().awaitUninterruptibly();
+				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
 			}
 			return true;
 			} catch (Exception e) {
@@ -69,10 +69,10 @@ public class AnonymousChatImpl implements AnonymousChat{
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
-				Room room;
-				room = (Room) futureGet.dataMap().values().iterator().next().object();
+				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
 				room.addPeer(peer.peerAddress());
 				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
+				this.j_rooms.add(_room_name);
 				return true;
 			}
 		}catch (Exception e) {
@@ -86,9 +86,9 @@ public class AnonymousChatImpl implements AnonymousChat{
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
-				Room room;
-				room = (Room) futureGet.dataMap().values().iterator().next().object();
+				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
 				room.removePeer(peer.peerAddress());
+				this.j_rooms.remove(_room_name);
 				return true;
 			}
 		}catch (Exception e) {
@@ -109,24 +109,21 @@ public class AnonymousChatImpl implements AnonymousChat{
 				Room room;
 				room = (Room) futureGet.dataMap().values().iterator().next().object();
 				HashSet<PeerAddress> temp= room.getUsers();
-				temp.remove(peer.peerAddress());
+				temp.remove(peer.peerAddress()); //se si commenta tale linea, quando un peer invia un messaggio nella chat, il messaggio viene spedito a lui stesso
 				for(PeerAddress p: temp){
 					pk.setDestination(p);
 					int inoltro=r.nextInt(2);
-					System.out.println(inoltro);
 					if(inoltro==1) {
 						FutureDirect futureDirect = _dht.peer().sendDirect(p).object(pk).start();
 						futureDirect.awaitUninterruptibly();
 					}
 					else if (inoltro==0){
-						this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(), peer.peerAddress(),p );
+						this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(),peer.peerAddress(),p);
 						int indexInoltro=r.nextInt(currentPeerRoomCleared.size());
 						PeerAddress pd=currentPeerRoomCleared.get(indexInoltro);
 						FutureDirect futureDirect = _dht.peer().sendDirect(pd).object(pk).start();
 						futureDirect.awaitUninterruptibly();
 					}
-     
-     
 				}
 				return true;
 			}
@@ -142,10 +139,5 @@ public class AnonymousChatImpl implements AnonymousChat{
 		}
 		list.remove(s);
 		list.remove(t);
-	}
-
-	private boolean equalPeerAddress(PeerAddress p1,PeerAddress p2) {
-		/*non FUNZIONA BISOGNA CONFRONTARE IL PEER ID*/
-		return p1.peerId().equals(p2.peerId());
 	}
 }
