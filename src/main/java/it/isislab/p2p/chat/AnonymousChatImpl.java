@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import net.tomp2p.dht.FutureGet;
+import net.tomp2p.dht.FuturePut;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
 import net.tomp2p.futures.FutureBootstrap;
@@ -36,7 +37,7 @@ public class AnonymousChatImpl implements AnonymousChat{
 	    }
 	    peer.objectDataReply(new ObjectDataReply() {
 	    		public Object reply(PeerAddress sender, Object request) throws Exception {
-	    		Pacchetto pk=(Pacchetto)request;
+	    		Messaggio pk=(Messaggio)request;
 	    		if(pk.getDestination().peerId().equals(peer.peerAddress().peerId())) {
 	    			System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+" --- messaggio:"+pk.getMessage());
 	    		}
@@ -51,7 +52,7 @@ public class AnonymousChatImpl implements AnonymousChat{
 
 	public boolean createRoom(String _room_name) {
 		try {
-			Room room=new Room(_room_name);
+			Room room=new Room(_room_name,100);
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess() && futureGet.isEmpty()) {
@@ -70,6 +71,7 @@ public class AnonymousChatImpl implements AnonymousChat{
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
 				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
+				room.getListaMessaggiSalvati().stream().forEach(x->System.out.println(x.toString()));
 				room.addPeer(peer.peerAddress());
 				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
 				this.j_rooms.add(_room_name);
@@ -99,8 +101,7 @@ public class AnonymousChatImpl implements AnonymousChat{
  
 	public boolean sendMessage(String _room_name, String _text_message) {
 		try {
-			Pacchetto pk = new Pacchetto();
-			pk.setMessage(_text_message);
+			Messaggio pk = new Messaggio(_text_message, _room_name);
 			List<PeerAddress> currentPeerRoomCleared=new ArrayList<PeerAddress>();
 			Random r=new Random();
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
@@ -108,21 +109,33 @@ public class AnonymousChatImpl implements AnonymousChat{
 			if (futureGet.isSuccess()) {
 				Room room;
 				room = (Room) futureGet.dataMap().values().iterator().next().object();
-				HashSet<PeerAddress> temp= room.getUsers();
-				temp.remove(peer.peerAddress()); //se si commenta tale linea, quando un peer invia un messaggio nella chat, il messaggio viene spedito a lui stesso
-				for(PeerAddress p: temp){
+				HashSet<PeerAddress> listUsers = room.getUsers();
+				listUsers.remove(peer.peerAddress()); //se si commenta tale linea, quando un peer invia un messaggio nella chat, il messaggio viene spedito a lui stesso
+				int i = 0;
+				for(PeerAddress p: listUsers){
+					++i;
 					pk.setDestination(p);
-					int inoltro=r.nextInt(2);
-					if(inoltro==1) {
-						FutureDirect futureDirect = _dht.peer().sendDirect(p).object(pk).start();
-						futureDirect.awaitUninterruptibly();
-					}
-					else if (inoltro==0){
+					if(i==1) {
 						this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(),peer.peerAddress(),p);
 						int indexInoltro=r.nextInt(currentPeerRoomCleared.size());
 						PeerAddress pd=currentPeerRoomCleared.get(indexInoltro);
+		    				room.addMessage(pk);
+		    				_dht.put(Number160.createHash(pk.getNameRoom())).data(new Data(room)).start().awaitUninterruptibly();
 						FutureDirect futureDirect = _dht.peer().sendDirect(pd).object(pk).start();
 						futureDirect.awaitUninterruptibly();
+					} else {
+						int inoltro=r.nextInt(2);
+						if(inoltro==1) {
+							FutureDirect futureDirect = _dht.peer().sendDirect(p).object(pk).start();
+							futureDirect.awaitUninterruptibly();
+						}
+						else if (inoltro==0){
+							this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(),peer.peerAddress(),p);
+							int indexInoltro=r.nextInt(currentPeerRoomCleared.size());
+							PeerAddress pd=currentPeerRoomCleared.get(indexInoltro);
+							FutureDirect futureDirect = _dht.peer().sendDirect(pd).object(pk).start();
+							futureDirect.awaitUninterruptibly();
+						}
 					}
 				}
 				return true;

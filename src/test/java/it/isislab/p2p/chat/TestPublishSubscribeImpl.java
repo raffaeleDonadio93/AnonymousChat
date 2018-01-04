@@ -45,7 +45,9 @@ public class TestPublishSubscribeImpl {
 			System.out.println("send dal nodo 0");
 			peer0.sendMessage("calcio", "ciao ragazzzi come va?");
 			
-		
+			
+			AnonymousChat peer4 = new AnonymousChatImpl(4, "127.0.0.1", new MessageListenerImpl(4));
+			peer4.joinRoom("calcio");
 			
 			
 			
