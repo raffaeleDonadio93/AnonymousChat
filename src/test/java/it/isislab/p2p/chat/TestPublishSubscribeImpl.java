@@ -5,7 +5,6 @@ import java.io.IOException;
 public class TestPublishSubscribeImpl {
 
 	public static void main(String[] args) {
-		
 		class MessageListenerImpl implements MessageListener{
 			int peerid;
 			public MessageListenerImpl(int peerid)
@@ -24,30 +23,14 @@ public class TestPublishSubscribeImpl {
 			
 			AnonymousChat peer1 = new AnonymousChatImpl(1, "127.0.0.1", new MessageListenerImpl(1));
 			
-			AnonymousChat peer2 = new AnonymousChatImpl(2, "127.0.0.1", new MessageListenerImpl(2));
-			
-			AnonymousChat peer3 = new AnonymousChatImpl(3, "127.0.0.1", new MessageListenerImpl(3));
-			
 			
 			peer0.createRoom("calcio");
-			System.out.println("creata");
-			
 			peer0.joinRoom("calcio");
-			System.out.println("join p0");
 			peer1.joinRoom("calcio");
-			System.out.println("join p1");
-			peer2.joinRoom("calcio");
-			System.out.println("join p2");
-			
-			peer3.joinRoom("calcio");
-			System.out.println("join p3");
-			
-			System.out.println("send dal nodo 0");
-			peer0.sendMessage("calcio", "ciao ragazzzi come va?");
-			
-			
-			AnonymousChat peer4 = new AnonymousChatImpl(4, "127.0.0.1", new MessageListenerImpl(4));
-			peer4.joinRoom("calcio");
+			System.out.println("creata");
+			peer1.sendMessage("calcio", "ciao ragazzzi come va?");
+			System.out.println("send");
+		
 			
 			
 			

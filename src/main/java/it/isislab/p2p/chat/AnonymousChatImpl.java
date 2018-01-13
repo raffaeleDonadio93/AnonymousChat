@@ -1,16 +1,15 @@
-
 package it.isislab.p2p.chat;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+
 import net.tomp2p.dht.FutureGet;
-import net.tomp2p.dht.FuturePut;
 import net.tomp2p.dht.PeerBuilderDHT;
 import net.tomp2p.dht.PeerDHT;
+import net.tomp2p.futures.BaseFutureAdapter;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.futures.FutureDirect;
 import net.tomp2p.p2p.Peer;
@@ -21,122 +20,139 @@ import net.tomp2p.rpc.ObjectDataReply;
 import net.tomp2p.storage.Data;
 
 public class AnonymousChatImpl implements AnonymousChat{
-	 
 	final private Peer peer;
 	final private PeerDHT _dht;
+	final private int nMax=100;
 	final private int DEFAULT_MASTER_PORT=4000;
-	final private ArrayList<String> j_rooms=new ArrayList<String>();
+	private  Logger logger = Logger.getLogger("AnonymousChatImpl");
 
-	public AnonymousChatImpl( int _id, String _master_peer, final MessageListener _listener) throws IOException {
-		peer= new PeerBuilder(Number160.createHash(_id)).ports(DEFAULT_MASTER_PORT+_id).start();
-		_dht = new PeerBuilderDHT(peer).start(); 
-	    FutureBootstrap fb = peer.bootstrap().inetAddress(InetAddress.getByName(_master_peer)).ports(DEFAULT_MASTER_PORT).start();
-	    fb.awaitUninterruptibly();
-	    if(fb.isSuccess()) {
-	    		peer.discover().peerAddress(fb.bootstrapTo().iterator().next()).start().awaitUninterruptibly();
-	    }
-	    peer.objectDataReply(new ObjectDataReply() {
-	    		public Object reply(PeerAddress sender, Object request) throws Exception {
-	    		Messaggio pk=(Messaggio)request;
-	    		if(pk.getDestination().peerId().equals(peer.peerAddress().peerId())) {
-	    			System.out.println("ho ricevuto un messaggio da:"+sender.peerId()+" --- messaggio:"+pk.getMessage());
-	    		}
-	    		else {
-			    FutureDirect futureDirect = _dht.peer().sendDirect(pk.getDestination()).object(pk).start();
-			    futureDirect.awaitUninterruptibly();
-	    		}
-	    		return _listener.parseMessage(request);
-	    		}
-		});
+	public AnonymousChatImpl( int _id, String _master_peer, final MessageListener _listener) throws IOException
+	{
+	
+		 peer= new PeerBuilder(Number160.createHash(_id)).ports(DEFAULT_MASTER_PORT+_id).start();
+		 _dht = new PeerBuilderDHT(peer).start();	
+		FutureBootstrap fb = peer.bootstrap().inetAddress(InetAddress.getByName(_master_peer)).ports(DEFAULT_MASTER_PORT).start();
+		fb.awaitUninterruptibly();
+		if(fb.isSuccess()) {
+			peer.discover().peerAddress(fb.bootstrapTo().iterator().next()).start().awaitUninterruptibly();
+		}
+		
+		logger.addHandler(new FileHandler(System.getProperty("user.dir")+"\\log\\logger_"+_id+".log",true));
+		logger.setUseParentHandlers(false);
+		
+		peer.objectDataReply(new ObjectDataReply() {
+		
+		public Object reply(PeerAddress sender, Object request) throws Exception {
+			Message mex = (Message) request;
+			if(!equalsPeerAndress(mex.getDestination(),peer.peerAddress())){
+		        logger.info("Dovrei inoltrare a:"+mex.getDestination().peerId());  
+				if((new Random().nextInt(2)==0)){// invio diretto
+					 sendToPeer(mex,mex.getDestination());
+				     logger.info("result=0: invio diretto a destinazione:"+mex.getDestination().peerId());
+					}else{
+					   try{
+					     FutureGet futureGet = _dht.get(Number160.createHash(mex.getNameRoom())).start();
+						 futureGet.addListener(new BaseFutureAdapter<FutureGet>() {
+				         public void operationComplete(FutureGet future) throws Exception {
+							     if(future.isSuccess()) { 
+								  Room room = (Room) futureGet.dataMap().values().iterator().next().object();
+							      int value= (new Random()).nextInt(room.getUsers().size()-2);
+							      PeerAddress peerDest = (PeerAddress)room.getUsers().stream().filter(x->!x.peerId().equals(peer.peerAddress().peerId())&& !x.peerId().equals(sender.peerId())).toArray()[value];
+							      sendToPeer(mex,peerDest);
+							      logger.info("result=1: inoltro a:"+peerDest.peerId());
+							     }
+							    }
+							   });
+					  }catch(Exception e){
+								e.printStackTrace();
+							}
+					}	  
+		       return null;
+		    }
+			else{
+				return _listener.parseMessage(mex);
+			}
+		}
+	});
+		
+	
 	}
 
 	public boolean createRoom(String _room_name) {
+		// TODO Auto-generated method stub
 		try {
-			Room room=new Room(_room_name,100);
+			Room r=new Room(_room_name,nMax);
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
-			if (futureGet.isSuccess() && futureGet.isEmpty()) {
-				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
-			}
+			if (futureGet.isSuccess() && futureGet.isEmpty()) 
+				_dht.put(Number160.createHash(_room_name)).data(new Data(r)).start().awaitUninterruptibly();
 			return true;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
- 
+	
 	public boolean joinRoom(String _room_name) {
+		// TODO Auto-generated method stub
 		try {
-			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
-			futureGet.awaitUninterruptibly();
-			if (futureGet.isSuccess()) {
-				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
-				room.getListaMessaggiSalvati().stream().forEach(x->System.out.println(x.toString()));
-				room.addPeer(peer.peerAddress());
-				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
-				this.j_rooms.add(_room_name);
-				return true;
-			}
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
- 
-	public boolean leaveRoom(String _room_name) {
-		try {
-			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
-			futureGet.awaitUninterruptibly();
-			if (futureGet.isSuccess()) {
-				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
-				room.removePeer(peer.peerAddress());
-				this.j_rooms.remove(_room_name);
-				return true;
-			}
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
- 
-	public boolean sendMessage(String _room_name, String _text_message) {
-		try {
-			Messaggio pk = new Messaggio(_text_message, _room_name);
-			List<PeerAddress> currentPeerRoomCleared=new ArrayList<PeerAddress>();
-			Random r=new Random();
 			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
 			futureGet.awaitUninterruptibly();
 			if (futureGet.isSuccess()) {
 				Room room;
 				room = (Room) futureGet.dataMap().values().iterator().next().object();
-				HashSet<PeerAddress> listUsers = room.getUsers();
-				listUsers.remove(peer.peerAddress()); //se si commenta tale linea, quando un peer invia un messaggio nella chat, il messaggio viene spedito a lui stesso
-				int i = 0;
-				for(PeerAddress p: listUsers){
-					++i;
-					pk.setDestination(p);
-					if(i==1) {
-						this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(),peer.peerAddress(),p);
-						int indexInoltro=r.nextInt(currentPeerRoomCleared.size());
-						PeerAddress pd=currentPeerRoomCleared.get(indexInoltro);
-		    				room.addMessage(pk);
-		    				_dht.put(Number160.createHash(pk.getNameRoom())).data(new Data(room)).start().awaitUninterruptibly();
-						FutureDirect futureDirect = _dht.peer().sendDirect(pd).object(pk).start();
-						futureDirect.awaitUninterruptibly();
-					} else {
-						int inoltro=r.nextInt(2);
-						if(inoltro==1) {
-							FutureDirect futureDirect = _dht.peer().sendDirect(p).object(pk).start();
-							futureDirect.awaitUninterruptibly();
-						}
-						else if (inoltro==0){
-							this.getCurrentPeer(currentPeerRoomCleared, room.getUsers(),peer.peerAddress(),p);
-							int indexInoltro=r.nextInt(currentPeerRoomCleared.size());
-							PeerAddress pd=currentPeerRoomCleared.get(indexInoltro);
-							FutureDirect futureDirect = _dht.peer().sendDirect(pd).object(pk).start();
-							futureDirect.awaitUninterruptibly();
-						}
+				room.addPeer(peer.peerAddress());
+				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
+				
+				return true;
+			}
+			
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean leaveRoom(String _room_name) {
+		// TODO Auto-generated method stub
+		try {
+			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
+			futureGet.awaitUninterruptibly();
+			if (futureGet.isSuccess()) {
+				Room room;
+				room = (Room) futureGet.dataMap().values().iterator().next().object();
+				room.removePeer(peer.peerAddress());
+				_dht.put(Number160.createHash(_room_name)).data(new Data(room)).start().awaitUninterruptibly();
+				return true;
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean sendMessage(String _room_name,String _text_message) {
+		// TODO Auto-generated method stub
+		try {
+			FutureGet futureGet = _dht.get(Number160.createHash(_room_name)).start();
+			futureGet.awaitUninterruptibly();
+			Message mex= new Message(_room_name,_text_message);
+			if (futureGet.isSuccess()) {
+				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
+				for(PeerAddress p: room.getUsers())
+				{
+			     if(!equalsPeerAndress(p,peer.peerAddress())){
+			   	    mex.setDestination(p);
+					if((new Random().nextInt(2)==0)){// invio diretto
+					sendToPeer(mex,p);
+					logger.info("result=0: invio diretto a destinazione:"+p.peerId());
+					}else{
+				     int value =(new Random()).nextInt(room.getUsers().size()-2);
+				     PeerAddress p1 = (PeerAddress)room.getUsers().stream().filter(x->!x.peerId().equals(peer.peerAddress().peerId())&& !x.peerId().equals(p.peerId())).toArray()[value];
+					 sendToPeer(mex,p1);
+					logger.info("result=1: inoltro a:"+p1.peerId());
 					}
+			     }
 				}
 				return true;
 			}
@@ -145,12 +161,22 @@ public class AnonymousChatImpl implements AnonymousChat{
 		}
 		return false;
 	}
- 
-	private void getCurrentPeer(List<PeerAddress> list,HashSet<PeerAddress> alluserRoom, PeerAddress s,PeerAddress t) {
-		for(PeerAddress p: alluserRoom) {
-			list.add(p);
-		}
-		list.remove(s);
-		list.remove(t);
+	
+	public void sendToPeer(Message mex,PeerAddress destPeer){
+		FutureDirect futureDirect = _dht.peer().sendDirect(destPeer).object(mex).start();
+		futureDirect.addListener(new BaseFutureAdapter<FutureDirect>() {
+          	@Override
+			public void operationComplete(FutureDirect future) throws Exception {
+				if (future.isSuccess()) {
+                   logger.info("Ho inviato a "+mex.getDestination()+" il messaggio: "+mex.getMessage());
+				}
+			}
+         });
 	}
+	
+   public boolean equalsPeerAndress(PeerAddress p1,PeerAddress p2){
+	   return  p1.peerId().equals(p2.peerId());
+   }
+	
+	
 }
