@@ -137,9 +137,8 @@ public class AnonymousChatImpl implements AnonymousChat{
 					 dest=p;
 					 logger.info("forward=false: invio diretto a destinazione:"+p.peerId());
 					}else{
-				     PeerAddress p1 = room.getRandomPeer(peer.peerAddress(),p);
-				     dest=p1;
-					 logger.info("forward=true: inoltro a:"+p1.peerId());
+				     dest = room.getRandomPeer(peer.peerAddress(),p);
+					 logger.info("forward=true: inoltro a:"+dest.peerId());
 					}
 					sendToPeer(mex,dest);
 			     }
