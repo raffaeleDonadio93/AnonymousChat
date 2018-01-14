@@ -1,40 +1,37 @@
 package it.isislab.p2p.chat;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.List;
+import java.util.Random;
 
 import net.tomp2p.peers.PeerAddress;
 
 public class Room implements Serializable {
 
-	private static final long serialVersionUID = -8377043372564052802L;
 	private String name;
+	private int peerMax;
 	private HashSet<PeerAddress> users;
-	private Queue<Messaggio> listaMessaggiSalvati;
 	
-	public Room(String name, int capacity) {
-		this.name = name;
-		users = new HashSet<PeerAddress>();
-		listaMessaggiSalvati = new LinkedBlockingQueue<Messaggio>(capacity);
+	public Room(String name,int n) {
+		
+		this.name=name;
+		this.peerMax=n;
+		users=new HashSet<PeerAddress>();
 	}
 
-	public Queue<Messaggio> getListaMessaggiSalvati() {
-		return listaMessaggiSalvati;
-	}
-
-	public void setListaMessaggiSalvati(Queue<Messaggio> listaMessaggiSalvati) {
-		this.listaMessaggiSalvati = listaMessaggiSalvati;
-	}
-
+	
 	public HashSet<PeerAddress> getUsers() {
 		return users;
 	}
 
+
+
 	public void setUsers(HashSet<PeerAddress> users) {
 		this.users = users;
 	}
+
 
 	public String getName() {
 		return name;
@@ -43,11 +40,18 @@ public class Room implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	public void addPeer(PeerAddress p) {
-		this.users.add(p);
+
+	public int getPeerMax() {
+		return peerMax;
 	}
-	
+
+	public void setPeerMax(int peerMax) {
+		this.peerMax = peerMax;
+	}
+	public void addPeer(PeerAddress p) {
+		
+	this.users.add(p);
+	}
 	public boolean removePeer(PeerAddress p) {
 		for(PeerAddress t: users)
 			if(t.equals(p))
@@ -57,13 +61,9 @@ public class Room implements Serializable {
 			}
 		return false;
 	}
-	
-	public void addMessage(Messaggio message) {
-		try {
-			this.listaMessaggiSalvati.add(message);
-		} catch (IllegalStateException e) {
-			this.listaMessaggiSalvati.poll();
-			this.listaMessaggiSalvati.add(message);
-		}
+
+	public PeerAddress getRandomPeer(PeerAddress p1,PeerAddress p2){
+	    int value =(new Random()).nextInt(users.size()-2);
+	    return (PeerAddress) users.stream().filter(x->!x.peerId().equals(p1.peerId())&& !x.peerId().equals(p2.peerId())).toArray()[value];	
 	}
 }
