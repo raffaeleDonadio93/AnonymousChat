@@ -2,6 +2,8 @@ package it.isislab.p2p.chat;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -46,27 +48,13 @@ public class AnonymousChatImpl implements AnonymousChat{
 			Message mex = (Message) request;
 			if(!equalsPeerAndress(mex.getDestination(),peer.peerAddress())){
 		        logger.info("Dovrei inoltrare a:"+mex.getDestination().peerId());  
-				if((new Random().nextInt(2)==0)){// invio diretto
+		        boolean forward=new Random().nextInt(2)==0 ? true :false;
+				if(!forward){
 					 sendToPeer(mex,mex.getDestination());
-				     logger.info("result=0: invio diretto a destinazione:"+mex.getDestination().peerId());
-					}else{
-					   try{
-					     FutureGet futureGet = _dht.get(Number160.createHash(mex.getNameRoom())).start();
-						 futureGet.addListener(new BaseFutureAdapter<FutureGet>() {
-				         public void operationComplete(FutureGet future) throws Exception {
-							     if(future.isSuccess()) { 
-								  Room room = (Room) futureGet.dataMap().values().iterator().next().object();
-							      int value= (new Random()).nextInt(room.getUsers().size()-2);
-							      PeerAddress peerDest = (PeerAddress)room.getUsers().stream().filter(x->!x.peerId().equals(peer.peerAddress().peerId())&& !x.peerId().equals(sender.peerId())).toArray()[value];
-							      sendToPeer(mex,peerDest);
-							      logger.info("result=1: inoltro a:"+peerDest.peerId());
-							     }
-							    }
-							   });
-					  }catch(Exception e){
-								e.printStackTrace();
-							}
-					}	  
+				     logger.info("forward=false: invio diretto a destinazione:"+mex.getDestination().peerId());
+				}else{
+				     forwardMessage(mex, sender);
+				}	  
 		       return null;
 		    }
 			else{
@@ -143,15 +131,17 @@ public class AnonymousChatImpl implements AnonymousChat{
 				{
 			     if(!equalsPeerAndress(p,peer.peerAddress())){
 			   	    mex.setDestination(p);
-					if((new Random().nextInt(2)==0)){// invio diretto
-					sendToPeer(mex,p);
-					logger.info("result=0: invio diretto a destinazione:"+p.peerId());
+			   	    boolean forward=new Random().nextInt(2)==0 ? true :false;
+			        PeerAddress dest;
+			   	    if(!forward){
+					 dest=p;
+					 logger.info("forward=false: invio diretto a destinazione:"+p.peerId());
 					}else{
-				     int value =(new Random()).nextInt(room.getUsers().size()-2);
-				     PeerAddress p1 = (PeerAddress)room.getUsers().stream().filter(x->!x.peerId().equals(peer.peerAddress().peerId())&& !x.peerId().equals(p.peerId())).toArray()[value];
-					 sendToPeer(mex,p1);
-					logger.info("result=1: inoltro a:"+p1.peerId());
+				     PeerAddress p1 = room.getRandomPeer(peer.peerAddress(),p);
+				     dest=p1;
+					 logger.info("forward=true: inoltro a:"+p1.peerId());
 					}
+					sendToPeer(mex,dest);
 			     }
 				}
 				return true;
@@ -168,7 +158,7 @@ public class AnonymousChatImpl implements AnonymousChat{
           	@Override
 			public void operationComplete(FutureDirect future) throws Exception {
 				if (future.isSuccess()) {
-                   logger.info("Ho inviato a "+mex.getDestination()+" il messaggio: "+mex.getMessage());
+                   logger.info("Ho inviato a "+mex.getDestination());
 				}
 			}
          });
@@ -178,5 +168,20 @@ public class AnonymousChatImpl implements AnonymousChat{
 	   return  p1.peerId().equals(p2.peerId());
    }
 	
-	
+   public void forwardMessage(Message mex,PeerAddress sender){
+	   try{
+		     FutureGet futureGet = _dht.get(Number160.createHash(mex.getNameRoom())).start();
+			 futureGet.addListener(new BaseFutureAdapter<FutureGet>() {
+	         public void operationComplete(FutureGet future) throws Exception {
+				 if(future.isSuccess()) { 
+				   Room room = (Room) futureGet.dataMap().values().iterator().next().object();
+                   PeerAddress peerDest = room.getRandomPeer(peer.peerAddress(),sender);
+				   sendToPeer(mex,peerDest);
+				   logger.info("forward=true: inoltro a:"+peerDest.peerId());
+				  }
+			 }});
+		  }catch(Exception e){
+			e.printStackTrace();
+		}
+   }
 }

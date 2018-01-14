@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 
 import net.tomp2p.peers.PeerAddress;
 
@@ -59,5 +60,10 @@ public class Room implements Serializable {
 				return true;
 			}
 		return false;
+	}
+
+	public PeerAddress getRandomPeer(PeerAddress p1,PeerAddress p2){
+	    int value =(new Random()).nextInt(users.size()-2);
+	    return (PeerAddress) users.stream().filter(x->!x.peerId().equals(p1.peerId())&& !x.peerId().equals(p2.peerId())).toArray()[value];	
 	}
 }
