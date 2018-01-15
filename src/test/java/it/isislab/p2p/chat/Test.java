@@ -1,6 +1,8 @@
 package it.isislab.p2p.chat;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -56,6 +58,7 @@ public class Test extends TestCase {
 	
 	*/
 	
+	/*
 	public void testDuplicateJoinRoom() throws IOException {
 		AnonymousChat peer0 = new AnonymousChatImpl(0, "127.0.0.1", new MessageListenerImpl(0));
 		
@@ -66,4 +69,34 @@ public class Test extends TestCase {
 
 	}
 	
+	*/
+	
+	public void test() throws IOException, InterruptedException {
+		List<AnonymousChat> chat = createPoolOfPeer(10);
+		chat.get(0).createRoom("calcio");
+		joinChatToRoom("calcio", chat);
+		ciao();
+		assertEquals(true, chat.get(0).sendMessage("calcio", "hello everyone"));
+		ciao();
+	}
+	
+	
+	private List<AnonymousChat> createPoolOfPeer(int capacity) throws IOException{
+		List<AnonymousChat> pool = new ArrayList<AnonymousChat>(capacity);
+		for(int i=0; i<capacity; i++) {
+			pool.add(new AnonymousChatImpl(i, "127.0.0.1", new MessageListenerImpl(i)));
+		}
+		return pool;
+	}
+	
+	private void joinChatToRoom(String roomName, List<AnonymousChat> list) {
+		for (AnonymousChat peer : list) {
+			peer.joinRoom(roomName);
+		} 
+	}
+	
+	private void ciao() {
+		int i = 10000,j=0;
+		while(j++<i);
+	}
 }

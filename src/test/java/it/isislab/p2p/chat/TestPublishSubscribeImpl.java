@@ -5,18 +5,6 @@ import java.io.IOException;
 public class TestPublishSubscribeImpl {
 
 	public static void main(String[] args) {
-		class MessageListenerImpl implements MessageListener{
-			int peerid;
-			public MessageListenerImpl(int peerid)
-			{
-				this.peerid=peerid;
-			}
-			public Object parseMessage(Object obj) {
-				System.out.println(peerid+"] (Direct Message Received) "+obj);
-				return "success";
-			}
-			
-		}
 		
 		try {
 			AnonymousChat peer0 = new AnonymousChatImpl(0, "127.0.0.1", new MessageListenerImpl(0));

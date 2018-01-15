@@ -1,6 +1,7 @@
 package it.isislab.p2p.chat;
 
 public class MessageListenerImpl implements MessageListener {
+	
 	int peerid;
 	
 	public MessageListenerImpl(int peerid)
