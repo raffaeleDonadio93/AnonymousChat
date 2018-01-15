@@ -190,4 +190,23 @@ public class AnonymousChatImpl implements AnonymousChat{
    public int numberOfRegisteredRooms() {
 	   return this.registeredRooms.size();
    }
+   
+   public boolean leaveNetwork(){
+	   boolean flag = true;
+	   if(registeredRooms.size()==0)
+	      return false;
+	   
+	   for(String room:registeredRooms){
+	      boolean error= leaveRoom(room);
+	      if(!error)
+	    	 flag=false;    	
+	   }
+	   
+	   if(!flag)
+		   return false;
+	   
+	   _dht.peer().announceShutdown().start().awaitUninterruptibly();
+	   return true;
+   }
+   
 }
