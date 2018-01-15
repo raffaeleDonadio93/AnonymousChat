@@ -127,7 +127,7 @@ public class AnonymousChatImpl implements AnonymousChat{
 			Message mex= new Message(_room_name,_text_message);
 			if (futureGet.isSuccess()) {
 				Room room = (Room) futureGet.dataMap().values().iterator().next().object();
-				if(!room.getUsers().contains(peer.peerAddress())) {
+				if(!room.getUsers().contains(peer.peerAddress()) || room.getUsers().size()<3) {
 					return false;
 				} else {
 					for(PeerAddress p: room.getUsers()) {
