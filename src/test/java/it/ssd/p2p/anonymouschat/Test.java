@@ -2,7 +2,9 @@ package it.ssd.p2p.anonymouschat;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import it.ssd.p2p.anonymouschat.AnonymousChat;
 import it.ssd.p2p.anonymouschat.AnonymousChatImpl;
@@ -14,37 +16,34 @@ public class Test extends TestCase {
 
 	private List<Pair<AnonymousChat,MessageListenerImpl>> lista;
 	private int lastIdPeer;
-	
-	public void test() throws IOException, InterruptedException {
+		
+	public void testSingolRoom() throws IOException, InterruptedException {
 		String roomName = "calcio";
 		createPoolOfPeer(10);
 		lista.get(0).element0().createRoom(roomName); // create Room
 		joinPeersToRoom(roomName);
 		String messaggio = "hello everyone!!!";
-		int sender = 0; // peer 0 is the sender of the message
+		int sender = 0; // the peer in the position 0 of the list "lista" (he may change) is the sender of the message
 		lista.get(sender).element0().sendMessage("calcio", messaggio);
 		checkArrivalsMessages(sender, messaggio); // check the incoming message on all peer of the room
 		
 		
 		messaggio = "End of the world!!!";
-		lista.get(0).element0().leaveRoom(roomName);
-		lista.remove(0);
+		removePeersFromRoom(roomName, 1);
 		lista.get(sender).element0().sendMessage("calcio", messaggio);
 		checkArrivalsMessages(sender, messaggio); 
 		
 		
 		
 		messaggio = "No crimes!!!";
-		lista.get(0).element0().leaveRoom(roomName);
-		lista.remove(0);
+		removePeersFromRoom(roomName, 2);
 		lista.get(sender).element0().sendMessage("calcio", messaggio);
 		checkArrivalsMessages(sender, messaggio); 
 		
 		
 		
 		messaggio = "The big bang Theory!!!";
-		lista.get(0).element0().leaveRoom(roomName);
-		lista.remove(0);
+		removePeersFromRoom(roomName, 3);
 		lista.get(sender).element0().sendMessage("calcio", messaggio);
 		checkArrivalsMessages(sender, messaggio); 
 		
@@ -53,7 +52,6 @@ public class Test extends TestCase {
 		messaggio = "Alcatraz!!!";
 		lista.get(sender).element0().sendMessage("calcio", messaggio);
 		checkArrivalsMessages(sender, messaggio); 
-		
 		
 	}
 	
@@ -95,6 +93,15 @@ public class Test extends TestCase {
 			peer = new AnonymousChatImpl(lastIdPeer + i, "127.0.0.1", listener);
 			peer.joinRoom(roomName);
 			lista.add(new Pair<AnonymousChat, MessageListenerImpl>(peer, listener ));
+		}
+	}
+	
+	private void removePeersFromRoom(String roomName, int number) {
+		for(int i=0; i<number;i++) {
+			Random random = new Random();
+			int index = random.nextInt(lista.size());
+			lista.get(index).element0().leaveRoom(roomName);
+			lista.remove(index);
 		}
 	}
 	
