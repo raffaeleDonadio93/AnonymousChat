@@ -5,98 +5,94 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.TestCase;
+import net.tomp2p.utils.Pair;
 
 public class Test extends TestCase {
 
-	/*
-	 * questa è solo una classe di esempio per i nostri test
-	 * i metodi di tale classe li ho testati singolarmente
-	 */
-	
-	
-	/*
-	public void testJoin() throws IOException {
-		AnonymousChat peer0 = new AnonymousChatImpl(0, "127.0.0.1", new MessageListenerImpl(0));
-		AnonymousChat peer1 = new AnonymousChatImpl(1, "127.0.0.1", new MessageListenerImpl(1));
-		AnonymousChat peer2 = new AnonymousChatImpl(2, "127.0.0.1", new MessageListenerImpl(2));
-		AnonymousChat peer3 = new AnonymousChatImpl(3, "127.0.0.1", new MessageListenerImpl(3));
-		AnonymousChat peer4 = new AnonymousChatImpl(4, "127.0.0.1", new MessageListenerImpl(4));
-		AnonymousChat peer5 = new AnonymousChatImpl(5, "127.0.0.1", new MessageListenerImpl(5));
-		peer0.createRoom("calcio");
-		assertEquals(true, peer0.joinRoom("calcio")); 
-		assertEquals(true, peer1.joinRoom("calcio"));
-		assertEquals(true, peer2.joinRoom("calcio"));
-		assertEquals(true, peer3.joinRoom("calcio"));
-		assertEquals(true, peer4.joinRoom("calcio"));
-		assertEquals(true, peer5.joinRoom("calcio"));
-		assertEquals(true, peer5.sendMessage("calcio","hello"));
-		assertEquals(true, peer3.leaveRoom("calcio"));
-		assertEquals(true, peer4.leaveRoom("calcio"));
-		assertEquals(true, peer5.leaveRoom("calcio"));
-		assertEquals(false, peer3.sendMessage("calcio","hello"));
-	}
-	*/
-	
-	/*
-	public void testDuplicateRoom() throws IOException {
-		AnonymousChat peer0 = new AnonymousChatImpl(0, "127.0.0.1", new MessageListenerImpl(0));
-		AnonymousChat peer1 = new AnonymousChatImpl(1, "127.0.0.1", new MessageListenerImpl(1));
-		AnonymousChat peer2 = new AnonymousChatImpl(2, "127.0.0.1", new MessageListenerImpl(2));
-		assertEquals(true, peer2.createRoom("calcio"));
-		//assertEquals(true, peer0.joinRoom("calcio"));
-		//assertEquals(true, peer1.joinRoom("calcio"));
-		//assertEquals(true, peer2.joinRoom("calcio"));
-		//assertEquals(true, peer2.sendMessage("calcio", "ciao"));
-		//assertEquals(true, peer2.sendMessage("calcio", "ciao"));
-		//assertEquals(true, peer2.sendMessage("calcio", "ciao"));
-		assertEquals(true, peer2.createRoom("calcio"));
-		//prima il test non falliva, adesso fallisce...mha!!!
-		//ho aggiunto altri metodi per capire se era necessario far passare un po di tempo per far mettere a posto la DHT.
-		//togliendo anche i metodi commentati, adesso da errore, inizialmente il test passava senza errori. mha!
-		
-	}
-	
-	*/
-	
-	/*
-	public void testDuplicateJoinRoom() throws IOException {
-		AnonymousChat peer0 = new AnonymousChatImpl(0, "127.0.0.1", new MessageListenerImpl(0));
-		
-		//assertEquals(true, peer0.createRoom("calcio"));
-		//assertEquals(true, peer0.joinRoom("calcio"));
-		assertEquals(true, peer0.joinRoom("calcio")); //in linea 82 ho aggiunto un controllo per evitare il lancio di eccezione [!futureGet.isEmpty()]
-
-
-	}
-	
-	*/
+	private List<Pair<AnonymousChat,MessageListenerImpl>> lista;
+	private int lastIdPeer;
 	
 	public void test() throws IOException, InterruptedException {
-		List<AnonymousChat> chat = createPoolOfPeer(10);
-		chat.get(0).createRoom("calcio");
-		joinChatToRoom("calcio", chat);
-		ciao();
-		assertEquals(true, chat.get(0).sendMessage("calcio", "hello everyone"));
-		ciao();
+		String roomName = "calcio";
+		createPoolOfPeer(10);
+		lista.get(0).element0().createRoom(roomName); // create Room
+		joinPeersToRoom(roomName);
+		String messaggio = "hello everyone!!!";
+		int sender = 0; // peer 0 is the sender of the message
+		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		checkArrivalsMessages(sender, messaggio); // check the incoming message on all peer of the room
+		
+		
+		messaggio = "End of the world!!!";
+		lista.get(0).element0().leaveRoom(roomName);
+		lista.remove(0);
+		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		checkArrivalsMessages(sender, messaggio); 
+		
+		
+		
+		messaggio = "No crimes!!!";
+		lista.get(0).element0().leaveRoom(roomName);
+		lista.remove(0);
+		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		checkArrivalsMessages(sender, messaggio); 
+		
+		
+		
+		messaggio = "The big bang Theory!!!";
+		lista.get(0).element0().leaveRoom(roomName);
+		lista.remove(0);
+		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		checkArrivalsMessages(sender, messaggio); 
+		
+		
+		addPeersToRoom(roomName, 5);
+		messaggio = "Alcatraz!!!";
+		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		checkArrivalsMessages(sender, messaggio); 
+		
+		
 	}
 	
 	
-	private List<AnonymousChat> createPoolOfPeer(int capacity) throws IOException{
-		List<AnonymousChat> pool = new ArrayList<AnonymousChat>(capacity);
-		for(int i=0; i<capacity; i++) {
-			pool.add(new AnonymousChatImpl(i, "127.0.0.1", new MessageListenerImpl(i)));
+	private void createPoolOfPeer(int capacity) throws IOException{
+		lista = new ArrayList<Pair<AnonymousChat,MessageListenerImpl>>();
+		MessageListenerImpl listener;
+		AnonymousChat peer;
+		int i = 0;
+		for (i=0 ; i<capacity;i++) {
+			listener = new MessageListenerImpl(i);
+			peer = new AnonymousChatImpl(i, "127.0.0.1", listener);
+			lista.add(new Pair<AnonymousChat, MessageListenerImpl>(peer, listener));
 		}
-		return pool;
+		this.lastIdPeer = i;
 	}
 	
-	private void joinChatToRoom(String roomName, List<AnonymousChat> list) {
-		for (AnonymousChat peer : list) {
+	private void joinPeersToRoom(String room) {
+		for(int i=0 ; i<lista.size(); i++) {
+			lista.get(i).element0().joinRoom(room);
+		}
+	}
+	
+	private void checkArrivalsMessages(int sender, String messaggio) {
+		for(int i = 0; i<lista.size(); i++) {
+			if(i!=sender) {
+				while(!lista.get(i).element1().isLastMessage());
+				assertEquals(messaggio, lista.get(i).element1().getMessage().getMessage());
+				lista.get(i).element1().setLastMessage(false);
+			}
+		}
+	}
+	
+	private void addPeersToRoom(String roomName, int number) throws IOException {
+		MessageListenerImpl listener;
+		AnonymousChat peer;
+		for (int i=0;i <number; i++) {
+			listener = new MessageListenerImpl(lastIdPeer + i);
+			peer = new AnonymousChatImpl(lastIdPeer + i, "127.0.0.1", listener);
 			peer.joinRoom(roomName);
-		} 
+			lista.add(new Pair<AnonymousChat, MessageListenerImpl>(peer, listener ));
+		}
 	}
 	
-	private void ciao() {
-		int i = 10000,j=0;
-		while(j++<i);
-	}
 }
