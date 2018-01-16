@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>it.isislab.p2p</groupId>
-	<artifactId>publishsubscribe</artifactId>
+	<artifactId>anonymousChat</artifactId>
 	<version>1.0</version>
 	<packaging>jar</packaging>
 

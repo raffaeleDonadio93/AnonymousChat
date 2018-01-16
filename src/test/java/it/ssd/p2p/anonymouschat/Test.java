@@ -17,40 +17,44 @@ public class Test extends TestCase {
 	private List<Pair<AnonymousChat,MessageListenerImpl>> lista;
 	private int lastIdPeer;
 		
-	public void testSingolRoom() throws IOException, InterruptedException {
-		String roomName = "calcio";
+	public void testRooms() throws IOException, InterruptedException {
+		String roomName = "soccer";
+		String roomName2 ="world";
 		createPoolOfPeer(10);
 		lista.get(0).element0().createRoom(roomName); // create Room
+		lista.get(0).element0().createRoom(roomName2); // create Room
 		joinPeersToRoom(roomName);
+		joinPeersToRoom(roomName2);
 		String messaggio = "hello everyone!!!";
 		int sender = 0; // the peer in the position 0 of the list "lista" (he may change) is the sender of the message
-		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		lista.get(sender).element0().sendMessage(roomName, messaggio);
 		checkArrivalsMessages(sender, messaggio); // check the incoming message on all peer of the room
 		
+		messaggio="Lucille";
+		lista.get(sender).element0().sendMessage(roomName2, messaggio);
+		checkArrivalsMessages(sender, messaggio); // check the incoming message on all peer of the room
 		
 		messaggio = "End of the world!!!";
 		removePeersFromRoom(roomName, 1);
-		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		lista.get(sender).element0().sendMessage(roomName, messaggio);
 		checkArrivalsMessages(sender, messaggio); 
-		
 		
 		
 		messaggio = "No crimes!!!";
 		removePeersFromRoom(roomName, 2);
-		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		lista.get(sender).element0().sendMessage(roomName, messaggio);
 		checkArrivalsMessages(sender, messaggio); 
-		
 		
 		
 		messaggio = "The big bang Theory!!!";
 		removePeersFromRoom(roomName, 3);
-		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		lista.get(sender).element0().sendMessage(roomName, messaggio);
 		checkArrivalsMessages(sender, messaggio); 
 		
 		
 		addPeersToRoom(roomName, 5);
 		messaggio = "Alcatraz!!!";
-		lista.get(sender).element0().sendMessage("calcio", messaggio);
+		lista.get(sender).element0().sendMessage(roomName, messaggio);
 		checkArrivalsMessages(sender, messaggio); 
 		
 	}
