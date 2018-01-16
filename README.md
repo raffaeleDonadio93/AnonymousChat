@@ -35,14 +35,20 @@ Ogni peer avrà una componente sempre in ascolto, nel momento in cui ascolta un 
 
 
 ##Sviluppi futuri:
-Amplificare il protocollo di base per gestire il caso in cui un nodo della rete lascia il sistema senza invocare la leave network.
-
-##Uso della libreria tomP2P:
--listener
--messaggi diretti
+Amplificare il protocollo di base per gestire il caso in cui un nodo della rete si disconnette dalla rete in modo anomalo senza segnalare l'uscita.
 
 
-##Requisiti minimi:
-Per la compilazione è necessario avere almeno una versione di java 1.8 
+
+##Requisiti necessari:
+<b>Per la compilazione</b> è necessario avere almeno una versione di java 1.8.
+
+<br><b>Per i test</b> è necessario usare almeno tre peer. 
+
+##Testing svolto
+L'obiettivo principale del testing condotto dal team era capire se effettivamente tutti i peer collegati a una stanza ricevevano i messaggi.
+<br>Poichè il sistema di comunicazione è asincrono la <b>strategia adottata per il testing è la seguente</b>:
+<br><br>Nel momento in cui un peer riceve un messaggio setta un flag e salva l'ultimo messaggio.
+Nella classe di test dopo l'invio di un messaggio si fa spinning sul flag per attendere che il messaggio arrivi a destinazione. Usando semplicemente il flag abbiamo riscontrato problemi di aggiornamenti della cache quindi abbiamo dichiarato il flag come <b>volatile</b>.<br>
+<b>Tutte le funzionalità sono state testate</b>.
 
 
