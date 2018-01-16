@@ -1,4 +1,4 @@
-package it.isislab.p2p.chat;
+package it.ssd.p2p.anonymouschat;
 
 import java.io.Serializable;
 import java.util.HashSet;
