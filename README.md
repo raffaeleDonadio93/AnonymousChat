@@ -39,7 +39,16 @@ Amplificare il protocollo di base per gestire il caso in cui un nodo della rete 
 
 
 
-##Requisiti minimi:
-Per la compilazione è necessario avere almeno una versione di java 1.8 
+##Requisiti necessari:
+<b>Per la compilazione</b> è necessario avere almeno una versione di java 1.8.
+
+<br><b>Per i test</b> è necessario usare almeno tre peer. 
+
+##Testing svolto
+L'obiettivo principale del testing condotto dal team era capire se effettivamente tutti i peer collegati a una stanza ricevevano i messaggi.
+Poichè il sistema di comunicazione è asincrono la strategia adottata per il testing è la seguente:
+Nel momento in cui un peer riceve un messaggio setta un flag boolean e salva l'ultimo messaggio.
+Nella classe di test dopo l'invio di un messaggio si fa spinning sul flag per attendere che il messaggio arrivi a destinazione. Usando semplicemente il flag abbiamo riscontrato problemi di aggiornamenti della cache quindi abbiamo dichiarato il flag come <b>volatile</b>.<br>
+<b>Tutte le funzionalità sono state testate</b>.
 
 
