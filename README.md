@@ -35,11 +35,8 @@ Ogni peer avrà una componente sempre in ascolto, nel momento in cui ascolta un 
 
 
 ##Sviluppi futuri:
-Amplificare il protocollo di base per gestire il caso in cui un nodo della rete lascia il sistema senza invocare la leave network.
+Amplificare il protocollo di base per gestire il caso in cui un nodo della rete si disconnette dalla rete in modo anomalo senza segnalare l'uscita.
 
-##Uso della libreria tomP2P:
--listener
--messaggi diretti
 
 
 ##Requisiti minimi:
