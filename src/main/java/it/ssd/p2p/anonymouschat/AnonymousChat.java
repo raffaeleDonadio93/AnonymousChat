@@ -1,4 +1,4 @@
-package it.isislab.p2p.chat;
+package it.ssd.p2p.anonymouschat;
 /**
 Copyright 2017 Universita' degli Studi di Salerno
 Licensed under the Apache License, Version 2.0 (the "License");

@@ -1,9 +1,12 @@
-package it.isislab.p2p.chat;
+package it.ssd.p2p.anonymouschat;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.ssd.p2p.anonymouschat.AnonymousChat;
+import it.ssd.p2p.anonymouschat.AnonymousChatImpl;
+import it.ssd.p2p.anonymouschat.MessageListenerImpl;
 import junit.framework.TestCase;
 import net.tomp2p.utils.Pair;
 

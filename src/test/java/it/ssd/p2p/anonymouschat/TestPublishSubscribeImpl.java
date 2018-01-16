@@ -1,6 +1,10 @@
-package it.isislab.p2p.chat;
+package it.ssd.p2p.anonymouschat;
 
 import java.io.IOException;
+
+import it.ssd.p2p.anonymouschat.AnonymousChat;
+import it.ssd.p2p.anonymouschat.AnonymousChatImpl;
+import it.ssd.p2p.anonymouschat.MessageListenerImpl;
 
 public class TestPublishSubscribeImpl {
 
