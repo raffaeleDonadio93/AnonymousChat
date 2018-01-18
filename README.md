@@ -1,12 +1,8 @@
 # AnonymousChat on P2P Networks
 
-Progetta e sviluppa un'API di chat anonima basata su rete P2P.
+E' un set di API che consentono di creare una chat anonima su una rete P2P.
 Ogni peer può inviare messaggi nella chat room pubblica in modo anonimo.
-Il sistema consente agli utenti di creare una nuova stanza, unirsi alla stanza, lasciare una stanza e inviare un messaggio in una stanza. 
-Come descritto nell'API Java di AnonymousChat. 
-Progetta e sviluppa un'API di chat anonima basata su rete P2P. 
-Ogni peer può inviare messaggi nella chat room pubblica in modo anonimo. 
-Il sistema consente agli utenti di creare una nuova stanza, unirsi in una stanza, lasciare una stanza e inviare un messaggio in una stanza. Come descritto nell'API Java di AnonymousChat.
+Il sistema consente agli utenti di creare una nuova stanza, unirsi alla stanza, lasciare una stanza e inviare un messaggio in una stanza, come descritto nell'API Java di AnonymousChat. 
 
 ##Funzionalità:
 •	Creare una stanza
