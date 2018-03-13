@@ -7,7 +7,7 @@ Il sistema consente agli utenti di creare una nuova stanza, unirsi alla stanza, 
 <h2>Funzionalità:</h2>
 <h4>
 •	Creare una stanza
-
+<br>
 •	Collegarsi a una stanza
 
 •	Inviare un messaggio alla stanza
