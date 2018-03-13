@@ -5,17 +5,13 @@ Ogni peer può inviare messaggi nella chat room pubblica in modo anonimo.
 Il sistema consente agli utenti di creare una nuova stanza, unirsi alla stanza, lasciare una stanza e inviare un messaggio in una stanza, come descritto nell'API Java di AnonymousChat. 
 
 <h2>Funzionalità:</h2>
-<h4>
-•	Creare una stanza
-<br>
-•	Collegarsi a una stanza
-
-•	Inviare un messaggio alla stanza
-
-•	Lasciare una stanza
-
-•	Lasciare la rete (funzionalità aggiuntiva)
-</h4>
+<ul>
+  <li>Creare una stanza</li>
+  <li>Collegarsi a una stanza</li>
+  <li>Inviare un messaggio alla stanza</li>
+  <li>Lasciare la stanza</li>
+  <li>Lasciare la rete (funzionalità aggiuntiva)</li>
+ </ul>
 
 <h2>Protocollo di base:</h2> 
 Data una rete p2p composta da n nodi l’obiettivo è inviare messaggi in anonimato. 
